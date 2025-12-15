@@ -1,0 +1,48 @@
+# Files to EXCLUDE when creating deployment ZIP
+
+# Dependencies
+node_modules/
+vendor/
+
+# Environment
+.env
+.env.backup
+.env.production
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Laravel specific
+storage/logs/*
+!storage/logs/.gitignore
+storage/framework/cache/*
+!storage/framework/cache/.gitignore
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+
+# Testing
+.phpunit.result.cache
+tests/
+
+# Build artifacts (will be rebuilt on server)
+public/hot
+public/storage
+
+# Documentation (optional, can include if needed)
+README.md
+CHANGELOG.md

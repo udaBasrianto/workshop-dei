@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workshop Manager: Kalkulator HPP & Profit</title>
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Phosphor Icons (Mirip Lucide) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        /* Custom Styles */
+        .tab-active {
+            background-color: white;
+            color: #2563eb;
+            /* blue-600 */
+            border-top: 2px solid #2563eb;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-inactive {
+            color: #6b7280;
+            /* gray-500 */
+        }
+
+        .tab-inactive:hover {
+            background-color: #f3f4f6;
+            /* gray-100 */
+            color: #374151;
+            /* gray-700 */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans text-gray-800 min-h-screen">
+
+    <!-- HEADER -->
+    <header class="bg-blue-700 text-white p-4 shadow-lg sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="ph ph-calculator text-2xl"></i>
+                <h1 class="text-xl font-bold" id="header-title">Workshop Manager: Kalkulator HPP & Profit</h1>
+            </div>
+            <button onclick="saveData()"
+                class="bg-blue-800 hover:bg-blue-900 px-3 py-1 rounded text-sm flex items-center gap-1 transition">
+                <i class="ph ph-floppy-disk text-lg"></i> Simpan Data
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto p-4 md:p-6">
+
+        <!-- NAVIGASI TAB -->
+        <div class="flex overflow-x-auto space-x-2 mb-6 border-b border-gray-200 pb-1">
+            <button onclick="switchTab('dashboard')" id="btn-dashboard"
+                class="tab-btn flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap tab-active">
+                <i class="ph ph-currency-dollar text-lg"></i> Ringkasan & HPP
+            </button>
+            <button onclick="switchTab('bahan')" id="btn-bahan"
+                class="tab-btn flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap tab-inactive">
+                <i class="ph ph-package text-lg"></i> Biaya Bahan
+            </button>
+            <button onclick="switchTab('tk')" id="btn-tk"
+                class="tab-btn flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap tab-inactive">
+                <i class="ph ph-users text-lg"></i> Tenaga Kerja
+            </button>
+            <button onclick="switchTab('overhead')" id="btn-overhead"
+                class="tab-btn flex items-center gap-2 px-4 py-2 rounded-t-lg font-medium transition-colors whitespace-nowrap tab-inactive">
+                <i class="ph ph-lightbulb text-lg"></i> Overhead Workshop
+            </button>
+        </div>
+
+        <!-- CONTENT: DASHBOARD -->
+        <div id="tab-dashboard" class="tab-content block">
+            <div class="space-y-6">
+                <div
+                    class="bg-white rounded-lg shadow-md p-6 bg-gradient-to-br from-blue-50 to-white border border-blue-100">
+                    <h2 class="text-lg font-semibold mb-4 text-blue-800 flex items-center gap-2">
+                        <i class="ph ph-calculator text-xl"></i> Kalkulasi Akhir
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Kolom Kiri: Rincian Biaya -->
+                        <div class="space-y-4">
+                            <div
+                                class="flex justify-between items-center p-3 bg-white rounded border border-gray-100 shadow-sm">
+                                <span class="text-gray-600">Total Biaya Bahan</span>
+                                <span class="font-bold" id="dash-material-cost">Rp 0</span>
+                            </div>
+                            <div
+                                class="flex justify-between items-center p-3 bg-white rounded border border-gray-100 shadow-sm">
+                                <span class="text-gray-600">Total Biaya Tenaga Kerja</span>
+                                <span class="font-bold" id="dash-labor-cost">Rp 0</span>
+                            </div>
+                            <div
+                                class="flex justify-between items-center p-3 bg-white rounded border border-gray-100 shadow-sm">
+                                <span class="text-gray-600">Overhead per Unit</span>
+                                <span class="font-bold text-orange-600" id="dash-overhead-unit">Rp 0</span>
+                            </div>
+                            <div class="border-t border-gray-300 my-2"></div>
+                            <div
+                                class="flex justify-between items-center p-3 bg-blue-100 rounded border border-blue-200">
+                                <span class="font-bold text-blue-900">HPP (Modal)</span>
+                                <span class="font-bold text-xl text-blue-900" id="dash-hpp">Rp 0</span>
+                            </div>
+                        </div>
+
+                        <!-- Kolom Kanan: Penentuan Harga -->
+                        <div class="space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <h3 class="text-sm font-semibold text-gray-500 uppercase">Pengaturan Harga Jual</h3>
+
+                            <div class="flex flex-col gap-1">
+                                <label class="text-sm font-medium text-gray-600">Nama Produk</label>
+                                <input type="text" id="input-product-name"
+                                    oninput="updateSettings('productName', this.value)"
+                                    class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-sm font-medium text-gray-600">Margin Profit (%)</label>
+                                    <input type="number" id="input-margin"
+                                        oninput="updateSettings('profitMargin', this.value)"
+                                        class="border rounded p-2 border-gray-300 w-full focus:ring-blue-500 focus:outline-none">
+                                </div>
+                                <div class="flex flex-col gap-1 justify-end">
+                                    <div class="text-right text-sm text-green-600 font-medium" id="dash-profit-val">
+                                        Profit: Rp 0
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-4 border-t border-gray-300">
+                                <div class="text-sm text-gray-500 mb-1">Rekomendasi Harga Jual</div>
+                                <div class="text-3xl font-bold text-green-700" id="dash-selling-price">Rp 0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Tambahan -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm text-gray-500">
+                    <div class="bg-white p-3 rounded shadow-sm border">
+                        Kapasitas: <span id="dash-capacity-info">0</span> Unit/Bulan
+                    </div>
+                    <div class="bg-white p-3 rounded shadow-sm border">
+                        Total Overhead Bulanan: <span id="dash-total-overhead-info">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENT: BAHAN -->
+        <div id="tab-bahan" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">Rincian Bahan Baku (Per Unit)</h2>
+                    <button onclick="addItem('materials')"
+                        class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2">
+                        <i class="ph ph-plus"></i> Tambah Bahan
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 border-b">
+                                <th class="p-3">Nama Item</th>
+                                <th class="p-3 w-24">Satuan</th>
+                                <th class="p-3 w-32">Harga Satuan</th>
+                                <th class="p-3 w-24">Jumlah</th>
+                                <th class="p-3 w-32 text-right">Subtotal</th>
+                                <th class="p-3 w-16"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-materials">
+                            <!-- JS will populate this -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-blue-50 font-bold">
+                                <td colspan="4" class="p-3 text-right">TOTAL BAHAN BAKU:</td>
+                                <td class="p-3 text-right" id="total-materials">Rp 0</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENT: TENAGA KERJA -->
+        <div id="tab-tk" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">Biaya Tenaga Kerja Langsung (Per Unit)</h2>
+                    <button onclick="addItem('labor')"
+                        class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2">
+                        <i class="ph ph-plus"></i> Tambah Pekerja
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 border-b">
+                                <th class="p-3">Posisi / Pekerjaan</th>
+                                <th class="p-3 w-40">Upah per Jam</th>
+                                <th class="p-3 w-32">Durasi (Jam)</th>
+                                <th class="p-3 w-40 text-right">Total Biaya</th>
+                                <th class="p-3 w-16"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-labor">
+                            <!-- JS will populate this -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-blue-50 font-bold">
+                                <td colspan="3" class="p-3 text-right">TOTAL BIAYA TK:</td>
+                                <td class="p-3 text-right" id="total-labor">Rp 0</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENT: OVERHEAD -->
+        <div id="tab-overhead" class="tab-content hidden">
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">Biaya Operasional (Overhead) Bulanan</h2>
+                        <button onclick="addItem('overhead')"
+                            class="bg-blue-600 text-white hover:bg-blue-700 px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2">
+                            <i class="ph ph-plus"></i> Tambah Item
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto mb-6">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 border-b">
+                                    <th class="p-3">Jenis Pengeluaran</th>
+                                    <th class="p-3 w-48 text-right">Biaya Bulanan</th>
+                                    <th class="p-3 w-16"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-overhead">
+                                <!-- JS will populate this -->
+                            </tbody>
+                            <tfoot>
+                                <tr class="bg-blue-50 font-bold">
+                                    <td class="p-3 text-right">TOTAL BULANAN:</td>
+                                    <td class="p-3 text-right" id="total-overhead">Rp 0</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-md p-6 bg-orange-50 border border-orange-100">
+                    <h3 class="font-semibold text-orange-800 mb-2 flex items-center gap-2">
+                        <i class="ph ph-lightbulb text-lg"></i> Alokasi Overhead ke Produk
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-4">
+                        Biaya overhead bulanan harus dibagi dengan rata-rata jumlah produksi per bulan untuk mengetahui
+                        beban per unit.
+                    </p>
+                    <div class="flex items-center gap-4">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Perkiraan Produksi per Bulan
+                                (Unit)</label>
+                            <input type="number" id="input-capacity"
+                                oninput="updateSettings('productionCapacity', this.value)"
+                                class="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-orange-500 outline-none">
+                        </div>
+                        <div class="flex items-center text-gray-400 mt-6">
+                            <i class="ph ph-caret-right text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Beban Overhead per Unit</label>
+                            <div class="w-full bg-white border border-gray-300 rounded p-2 font-bold text-orange-700"
+                                id="calc-overhead-unit">
+                                Rp 0
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- 1. DATA AWAL (DEFAULT STATE) ---
+        // Data ini akan ditimpa jika ada data di LocalStorage
+        const defaultData = {
+            materials: [
+                { id: 1, item: "Besi hollow 40x40", unit: "batang", price: 120000, qty: 2 },
+                { id: 2, item: "Kayu Sengon", unit: "papan", price: 45000, qty: 3 },
+                { id: 3, item: "Baut & Sekrup", unit: "set", price: 15000, qty: 1 },
+                { id: 4, item: "Cat / Vernis", unit: "liter", price: 60000, qty: 0.5 },
+            ],
+            labor: [
+                { id: 1, role: "Tukang A", rate: 30000, hours: 3 },
+                { id: 2, role: "Tukang B", rate: 30000, hours: 1 },
+            ],
+            overhead: [
+                { id: 1, name: "Listrik", cost: 500000 },
+                { id: 2, name: "Sewa Workshop", cost: 2000000 },
+                { id: 3, name: "Pemeliharaan Mesin", cost: 300000 },
+                { id: 4, name: "ATK & Perlengkapan", cost: 150000 },
+            ],
+            settings: {
+                productionCapacity: 100,
+                profitMargin: 30,
+                productName: "Kursi Besi + Kayu"
+            }
+        };
+
+        // Load data dari LocalStorage atau gunakan default
+        let appData = JSON.parse(localStorage.getItem('workshopData')) || defaultData;
+
+        // --- 2. HELPER FUNCTIONS ---
+        const formatRupiah = (number) => {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(number);
+        };
+
+        const saveToStorage = () => {
+            localStorage.setItem('workshopData', JSON.stringify(appData));
+        };
+
+        // --- 3. RENDER FUNCTIONS (TAMPILAN) ---
+
+        function renderAll() {
+            renderMaterials();
+            renderLabor();
+            renderOverhead();
+            renderDashboard();
+
+            // Set input values for Settings
+            document.getElementById('input-product-name').value = appData.settings.productName;
+            document.getElementById('input-margin').value = appData.settings.profitMargin;
+            document.getElementById('input-capacity').value = appData.settings.productionCapacity;
+            document.getElementById('header-title').innerText = "Workshop Manager: " + appData.settings.productName;
+        }
+
+        function renderMaterials() {
+            const tbody = document.getElementById('table-materials');
+            tbody.innerHTML = '';
+            let total = 0;
+
+            appData.materials.forEach((m, index) => {
+                const subtotal = m.price * m.qty;
+                total += subtotal;
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-2"><input type="text" onchange="updateItem('materials', ${index}, 'item', this.value)" value="${m.item}" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none"></td>
+                        <td class="p-2"><input type="text" onchange="updateItem('materials', ${index}, 'unit', this.value)" value="${m.unit}" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none"></td>
+                        <td class="p-2"><input type="number" onchange="updateItem('materials', ${index}, 'price', this.value)" value="${m.price}" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none"></td>
+                        <td class="p-2"><input type="number" onchange="updateItem('materials', ${index}, 'qty', this.value)" value="${m.qty}" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none"></td>
+                        <td class="p-2 text-right font-medium">${formatRupiah(subtotal)}</td>
+                        <td class="p-2 text-center">
+                            <button onclick="deleteItem('materials', ${index})" class="text-red-500 hover:text-red-700"><i class="ph ph-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById('total-materials').innerText = formatRupiah(total);
+        }
+
+        function renderLabor() {
+            const tbody = document.getElementById('table-labor');
+            tbody.innerHTML = '';
+            let total = 0;
+
+            appData.labor.forEach((l, index) => {
+                const subtotal = l.rate * l.hours;
+                total += subtotal;
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-2"><input type="text" onchange="updateItem('labor', ${index}, 'role', this.value)" value="${l.role}" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none"></td>
+                        <td class="p-2"><input type="number" onchange="updateItem('labor', ${index}, 'rate', this.value)" value="${l.rate}" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none"></td>
+                        <td class="p-2"><input type="number" onchange="updateItem('labor', ${index}, 'hours', this.value)" value="${l.hours}" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none"></td>
+                        <td class="p-2 text-right font-medium">${formatRupiah(subtotal)}</td>
+                        <td class="p-2 text-center">
+                            <button onclick="deleteItem('labor', ${index})" class="text-red-500 hover:text-red-700"><i class="ph ph-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById('total-labor').innerText = formatRupiah(total);
+        }
+
+        function renderOverhead() {
+            const tbody = document.getElementById('table-overhead');
+            tbody.innerHTML = '';
+            let total = 0;
+
+            appData.overhead.forEach((o, index) => {
+                total += o.cost;
+                tbody.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-2"><input type="text" onchange="updateItem('overhead', ${index}, 'name', this.value)" value="${o.name}" class="w-full bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none"></td>
+                        <td class="p-2 text-right"><input type="number" onchange="updateItem('overhead', ${index}, 'cost', this.value)" value="${o.cost}" class="w-full text-right bg-transparent border-b border-transparent focus:border-blue-500 focus:outline-none"></td>
+                        <td class="p-2 text-center">
+                            <button onclick="deleteItem('overhead', ${index})" class="text-red-500 hover:text-red-700"><i class="ph ph-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById('total-overhead').innerText = formatRupiah(total);
+
+            // Calc Overhead Per Unit
+            const capacity = appData.settings.productionCapacity || 1;
+            const perUnit = total / capacity;
+            document.getElementById('calc-overhead-unit').innerText = formatRupiah(perUnit);
+            document.getElementById('dash-total-overhead-info').innerText = formatRupiah(total);
+        }
+
+        function renderDashboard() {
+            // Recalculate everything
+            const totalMat = appData.materials.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+            const totalLab = appData.labor.reduce((acc, curr) => acc + (curr.rate * curr.hours), 0);
+            const totalOverheadMonth = appData.overhead.reduce((acc, curr) => acc + curr.cost, 0);
+            const capacity = appData.settings.productionCapacity || 1;
+            const overheadUnit = totalOverheadMonth / capacity;
+
+            const hpp = totalMat + totalLab + overheadUnit;
+            const marginVal = hpp * (appData.settings.profitMargin / 100);
+            const sellingPrice = hpp + marginVal;
+
+            // Update DOM
+            document.getElementById('dash-material-cost').innerText = formatRupiah(totalMat);
+            document.getElementById('dash-labor-cost').innerText = formatRupiah(totalLab);
+            document.getElementById('dash-overhead-unit').innerText = formatRupiah(overheadUnit);
+            document.getElementById('dash-hpp').innerText = formatRupiah(hpp);
+
+            document.getElementById('dash-profit-val').innerText = "Profit: " + formatRupiah(marginVal);
+            document.getElementById('dash-selling-price').innerText = formatRupiah(sellingPrice);
+            document.getElementById('dash-capacity-info').innerText = capacity;
+        }
+
+        // --- 4. INTERACTION FUNCTIONS (CRUD) ---
+
+        function switchTab(tabId) {
+            // Hide all
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('tab-inactive');
+            });
+
+            // Show selected
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            const btn = document.getElementById('btn-' + tabId);
+            btn.classList.remove('tab-inactive');
+            btn.classList.add('tab-active');
+        }
+
+        function addItem(type) {
+            if (type === 'materials') {
+                appData.materials.push({ id: Date.now(), item: "Material Baru", unit: "pcs", price: 0, qty: 1 });
+            } else if (type === 'labor') {
+                appData.labor.push({ id: Date.now(), role: "Pekerja Baru", rate: 0, hours: 1 });
+            } else if (type === 'overhead') {
+                appData.overhead.push({ id: Date.now(), name: "Biaya Baru", cost: 0 });
+            }
+            renderAll();
+            saveToStorage();
+        }
+
+        function updateItem(type, index, field, value) {
+            // Convert numbers
+            if (field === 'price' || field === 'qty' || field === 'rate' || field === 'hours' || field === 'cost') {
+                value = parseFloat(value) || 0;
+            }
+            appData[type][index][field] = value;
+            renderAll();
+            // Don't save immediately on every keystroke to avoid lag, but here it's fine
+            saveToStorage();
+        }
+
+        function updateSettings(field, value) {
+            if (field === 'productionCapacity' || field === 'profitMargin') {
+                value = parseFloat(value) || 0;
+            }
+            appData.settings[field] = value;
+            renderAll();
+            saveToStorage();
+        }
+
+        function deleteItem(type, index) {
+            if (confirm('Hapus item ini?')) {
+                appData[type].splice(index, 1);
+                renderAll();
+                saveToStorage();
+            }
+        }
+
+        function saveData() {
+            saveToStorage();
+            alert('Data berhasil disimpan ke browser!');
+        }
+
+        // --- 5. INITIALIZE ---
+        window.onload = function () {
+            renderAll();
+        };
+
+    </script>
+</body>
+
+</html>
