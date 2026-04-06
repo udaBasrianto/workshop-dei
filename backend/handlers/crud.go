@@ -3,9 +3,11 @@ package handlers
 import (
 	"deistok/config"
 	"deistok/models"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 // ========== PRODUCTS ==========
@@ -148,10 +150,55 @@ func UpdateProduct(c *fiber.Ctx) error {
 }
 
 func DeleteProduct(c *fiber.Ctx) error {
-	id := c.Params("id")
-	if err := config.DB.Delete(&models.Product{}, id).Error; err != nil {
+	idParam := c.Params("id")
+	idInt, err := strconv.Atoi(idParam)
+	if err != nil || idInt <= 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid product id"})
+	}
+	id := uint(idInt)
+
+	if err := config.DB.First(&models.Product{}, id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "Product not found"})
 	}
+
+	var txItemCount int64
+	config.DB.Model(&models.TransactionItem{}).Where("product_id = ?", id).Count(&txItemCount)
+	if txItemCount > 0 {
+		return c.Status(409).JSON(fiber.Map{
+			"error": "Product cannot be deleted because it has transactions",
+		})
+	}
+
+	var opnameItemCount int64
+	config.DB.Model(&models.StockOpnameItem{}).Where("product_id = ?", id).Count(&opnameItemCount)
+	if opnameItemCount > 0 {
+		return c.Status(409).JSON(fiber.Map{
+			"error": "Product cannot be deleted because it has stock opname history",
+		})
+	}
+
+	err := config.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Delete(&models.ProductMaterial{}, "product_id = ?", id).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&models.ProductLabor{}, "product_id = ?", id).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&models.ProductOverhead{}, "product_id = ?", id).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&models.ProductImage{}, "product_id = ?", id).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&models.Product{}, id).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to delete product"})
+	}
+
 	return c.JSON(fiber.Map{"message": "Product deleted"})
 }
 

@@ -19,14 +19,16 @@ export default function Products({ type }: ProductsProps) {
     const [form, setForm] = useState<any>({
         type: 'production',
         product_materials: [],
-        product_labors: []
+        product_labors: [],
+        product_overheads: []
     });
     const [viewItem, setViewItem] = useState<any>(null);
     const [activeImage, setActiveImage] = useState<string | null>(null);
     const [allMaterials, setAllMaterials] = useState<any[]>([]);
     const [allLabors, setAllLabors] = useState<any[]>([]);
+    const [allOverheads, setAllOverheads] = useState<any[]>([]);
     const [uploading, setUploading] = useState(false);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [, setImagePreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const title = type === 'materials' ? 'Bahan Baku' : type === 'labors' ? 'Tenaga Kerja' : type === 'overheads' ? 'Overhead' : 'Produk';
@@ -40,6 +42,7 @@ export default function Products({ type }: ProductsProps) {
             getCategories().then((res) => setCategories(res.data || []));
             getMaterials().then((res) => setAllMaterials(res.data || []));
             getLabors().then((res) => setAllLabors(res.data || []));
+            getOverheads().then((res) => setAllOverheads(res.data || []));
         }
     };
 
@@ -58,7 +61,11 @@ export default function Products({ type }: ProductsProps) {
             return acc + (labor?.rate || 0) * (pl.hours || 0);
         }, 0);
 
-        return materialTotal + laborTotal;
+        const overheadTotal = (updatedForm.product_overheads || []).reduce((acc: number, po: any) => {
+            return acc + (po.amount || 0);
+        }, 0);
+
+        return materialTotal + laborTotal + overheadTotal;
     };
 
     const updateCalculatedPrice = (updatedForm: any) => {
@@ -118,6 +125,7 @@ export default function Products({ type }: ProductsProps) {
             expired_at: item.expired_at ? item.expired_at.split('T')[0] : '',
             product_materials: item.product_materials || [],
             product_labors: item.product_labors || [],
+            product_overheads: item.product_overheads || [],
             images: item.images || []
         } : {
             type: 'production',
@@ -126,6 +134,7 @@ export default function Products({ type }: ProductsProps) {
             profit_margin: 0,
             product_materials: [],
             product_labors: [],
+            product_overheads: [],
             images: []
         };
         setForm(baseForm);
@@ -263,6 +272,24 @@ export default function Products({ type }: ProductsProps) {
         const newLabors = [...form.product_labors];
         newLabors[index] = { ...newLabors[index], [field]: Number(value) };
         const updatedForm = { ...form, product_labors: newLabors };
+        updateCalculatedPrice(updatedForm);
+    };
+
+    const addOverheadRow = () => {
+        const newOverheads = [...(form.product_overheads || []), { overhead_id: 0, amount: 0 }];
+        setForm({ ...form, product_overheads: newOverheads });
+    };
+
+    const removeOverheadRow = (index: number) => {
+        const newOverheads = form.product_overheads.filter((_: any, i: number) => i !== index);
+        const updatedForm = { ...form, product_overheads: newOverheads };
+        updateCalculatedPrice(updatedForm);
+    };
+
+    const updateOverheadRow = (index: number, field: string, value: any) => {
+        const newOverheads = [...form.product_overheads];
+        newOverheads[index] = { ...newOverheads[index], [field]: Number(value) };
+        const updatedForm = { ...form, product_overheads: newOverheads };
         updateCalculatedPrice(updatedForm);
     };
 
@@ -758,6 +785,35 @@ export default function Products({ type }: ProductsProps) {
                                                                 className="w-20 px-2 py-1.5 text-sm border border-gray-200 rounded-lg"
                                                             />
                                                             <button type="button" onClick={() => removeLaborRow(idx)} className="text-red-500"><X className="w-4 h-4" /></button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-sm font-semibold text-gray-700">Overhead</label>
+                                                    <button type="button" onClick={addOverheadRow} className="text-xs text-blue-500 hover:underline">+ Tambah Overhead</button>
+                                                </div>
+                                                <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                                                    {(form.product_overheads || []).map((po: any, idx: number) => (
+                                                        <div key={idx} className="flex gap-2 items-center">
+                                                            <select
+                                                                value={po.overhead_id}
+                                                                onChange={(e) => updateOverheadRow(idx, 'overhead_id', e.target.value)}
+                                                                className="flex-1 px-2 py-1.5 text-sm border border-gray-200 rounded-lg"
+                                                            >
+                                                                <option value="0">Pilih Overhead</option>
+                                                                {allOverheads.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+                                                            </select>
+                                                            <input
+                                                                type="number"
+                                                                placeholder="Biaya"
+                                                                value={po.amount || ''}
+                                                                onChange={(e) => updateOverheadRow(idx, 'amount', e.target.value)}
+                                                                className="w-24 px-2 py-1.5 text-sm border border-gray-200 rounded-lg"
+                                                            />
+                                                            <button type="button" onClick={() => removeOverheadRow(idx)} className="text-red-500"><X className="w-4 h-4" /></button>
                                                         </div>
                                                     ))}
                                                 </div>
