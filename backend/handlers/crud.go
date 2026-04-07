@@ -177,7 +177,7 @@ func DeleteProduct(c *fiber.Ctx) error {
 		})
 	}
 
-	err := config.DB.Transaction(func(tx *gorm.DB) error {
+	err = config.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(&models.ProductMaterial{}, "product_id = ?", id).Error; err != nil {
 			return err
 		}
