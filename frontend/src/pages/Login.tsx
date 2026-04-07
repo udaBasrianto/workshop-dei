@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
-import { login as apiLogin } from '../services/api';
+import { getSettings, login as apiLogin } from '../services/api';
 import { Loader2, Package } from 'lucide-react';
 
 export default function Login() {
@@ -10,8 +10,20 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [brandName, setBrandName] = useState('DeiStok');
+    const [logoPath, setLogoPath] = useState<string | null>(null);
     const { login } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        getSettings()
+            .then((res) => {
+                setBrandName(res.data?.brand_name || 'DeiStok');
+                setLogoPath(res.data?.logo_path || null);
+            })
+            .catch(() => {
+            });
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,10 +46,14 @@ export default function Login() {
             <div className="w-full max-w-md">
                 <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/20">
                     <div className="flex items-center justify-center mb-8">
-                        <div className="bg-blue-500 p-3 rounded-xl">
-                            <Package className="w-8 h-8 text-white" />
+                        <div className="bg-blue-500 p-3 rounded-xl overflow-hidden flex items-center justify-center">
+                            {logoPath ? (
+                                <img src={logoPath} alt="Logo" className="w-8 h-8 object-contain bg-white rounded" />
+                            ) : (
+                                <Package className="w-8 h-8 text-white" />
+                            )}
                         </div>
-                        <h1 className="text-3xl font-bold text-white ml-3">DeiStok</h1>
+                        <h1 className="text-3xl font-bold text-white ml-3">{brandName}</h1>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
@@ -78,4 +94,3 @@ export default function Login() {
         </div>
     );
 }
-
